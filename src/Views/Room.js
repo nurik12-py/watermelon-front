@@ -1,85 +1,58 @@
 import React, { Component } from 'react';
-import CanvasAnimation from '../Components/CanvasAnimation';
 import MicButton from '../Components/MicButton';
 import Navbar from '../Components/Navbar';
 import { io } from "socket.io-client";
 import { getUser } from '../services/userService';
-import { pick } from "lodash";
-import { getRoom } from '../services/roomService';
-import ShareButton from '../Components/ShareButton';
-
 
 class Room extends Component {
-
     constructor(props) {
         super(props);
-        this.audioRef = React.createRef();
-
         this.state = {
-
             isMuted: false,
-            user: {
-                "avatarName": "bat",
-                "avatarColor": "1a508b"
-            },
-            friends: [],
             ioClient: null,
-            room: {
-                "name": ""
-            }
+            isCalling: false
         }
     }
 
-
-    setAudio = (stream) => {
-        this.audioRef.current.srcObject = stream;
-    }
-
     componentDidMount = async () => {
-        const roomId = this.props.location.pathname.split("/")[2];
-        const ioClient = io(process.env.REACT_APP_SOCKET_URL);
-        const { data: roomData } = await getRoom(roomId);
-        const { data: userData } = await getUser();
-        const user = pick(userData, ["email", "avatarName", "avatarColor", "_id"]);
-        ioClient.emit("join", JSON.stringify({ "roomId": roomId, ...user }));
-
-        ioClient.on("newUser", friends => {
-            console.log("New user joined");
-            const filteredFriends = friends.filter(friend => friend.email != user.email);
-            if (filteredFriends.length > 0) {
-
-            }
-            this.setState({ friends: filteredFriends });
+        const socket = io("http://localhost:4000");
+        const { data: user } = await getUser();
+        socket.on("connect", () => {
+            socket.emit("join", { id: socket.id, email: user.email });
         });
-
-        this.setState({ ioClient, user, room: roomData });
+        socket.on("onReject", () => {
+            alert("Your call declined");
+            window.location = '/';
+        });
+        socket.on("onAccept", () => {
+            this.setState({ isCalling: false });
+        });
     }
     onMute = () => {
         this.setState({ isMuted: !this.state.isMuted });
     }
     handleLeave = () => {
-        const roomId = this.props.location.pathname.split("/")[2];
-        const data = { email: this.state.user.email, roomId: roomId };
-        this.state.ioClient.emit("leave", data);
         this.props.history.push("/");
-        console.log("Left");
     }
     render() {
-        const { isMuted, friends, user, room } = this.state;
+        const { isMuted, isCalling } = this.state;
         return (
             <div>
-                <Navbar title="Room" isRoom={true} onLeave={this.handleLeave} />
-                <CanvasAnimation title={room.name} orbitRadius="90" circleRadius="25" user={user} friends={friends} numberOfPeople={friends.length} imageHeight={40} imageWidth={40} />
-                <video ref={this.audioRef} autoPlay={true} />
-                <div className="absolute bottom-5 flex items-center justify-center w-full">
-                    <div className="mr-3">
-                        <MicButton onClick={this.onMute} isMuted={this.state.isMuted} />
-                        <p className="text-center">{isMuted ? "Unmute" : "Mute"}</p>
-                    </div>
-                    <div>
-                        <ShareButton />
-                        <p className="text-center">Share</p>
-                    </div>
+                <Navbar title="What?Melon!" isRoom={true} onLeave={this.handleLeave} />
+                <div className="w-full h-full">
+                    {!isCalling ?
+                        <>
+                            <video className="absolute top-16 left-2 w-20 h-28 bg-black rounded-lg"></video>
+                            <MicButton className="mr-3 absolute bottom-5 flex flex-col items-center justify-center w-full z-10" onClick={this.onMute} isMuted={this.state.isMuted} />
+                        </>
+                        :
+                        <>
+                            <div className="mt-6 flex items-center justify-center space-x-2">
+                                <div className="w-2 h-2 bg-blue-500 rounded-full animate-ping"></div>
+                                <p>Calling...</p>
+                            </div>
+                        </>
+                    }
                 </div>
             </div>
         );

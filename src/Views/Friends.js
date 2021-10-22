@@ -1,42 +1,102 @@
 import React from 'react';
 import Label from '../Components/Label';
 import Navbar from '../Components/Navbar';
+import UserCard from '../Components/UserCard';
+import UserRequestCard from '../Components/UserRequestCard';
+import { addFriend, getFriends, removeFriend } from '../services/friendsService';
+import { getRequests, rejectRequest } from '../services/requestsService';
+import { getUser } from '../services/userService';
+import { EmojiHappyIcon } from "@heroicons/react/outline";
+import UserLoadingCard from '../Components/UserLoadingCard';
+import { io } from "socket.io-client";
+import { Link } from 'react-router-dom';
 
 class Friends extends React.Component {
+    state = {
+        friends: [],
+        requests: [],
+        isLoading: true,
+    }
+    async componentDidMount() {
+        const { data: requests } = await getRequests();
+        const { data: friends } = await getFriends();
+        const { data: user } = await getUser();
+        const socket = io("http://localhost:4000");
+
+        this.setState({ user, friends, requests, isLoading: false, socket });
+    }
+
+    handleRemoveFriend = async (id) => {
+        let friends = [...this.state.friends];
+        friends = friends.filter(friend => friend._id !== id);
+        const { data: result } = await removeFriend(id);
+        this.setState({ friends });
+    }
+
+
+    handleCall = (email) => {
+        const { socket, user } = this.state;
+        socket.emit("call", { email, caller: user.email });
+        window.location = '/room/watermelon';
+    }
+
+    handleAcceptRequest = async (id) => {
+        const { data: result } = await addFriend({ friendId: id });
+        let requests = [...this.state.requests];
+        let friends = [...this.state.friends];
+        requests = requests.map(request => request._id !== id);
+        this.setState({ requests, friends });
+    }
+
+    handleRejectRequest = async (id) => {
+        const { data: result } = await rejectRequest(id);
+        let requests = [...this.state.requests];
+        requests = requests.filter(request => request._id !== id);
+        this.setState({ requests });
+    }
+
     render() {
+        const { requests, friends, isLoading } = this.state;
         return (
-            <div>
+            <>
                 <Navbar title={"Friends"} />
                 <div className="px-4 py-4">
-                    <Label text="Friend requets" />
-                    <div className="mb-4 rounded-md bg-white border border-gray-100 h-16 px-3 flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                            <div alt="" className="w-10 h-10 bg-blue-100 rounded-full"></div>
-                            <p className="text-lg">Carl</p>
-                        </div>
-                        <div className="flex items-center space-x-3">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-red-500" viewBox="0 0 20 20" fill="currentColor">
-                                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                            </svg>
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
-                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                            </svg>
-                        </div>
-                    </div>
-                    <Label text="Friends" />
-                    <div className="rounded-md bg-white border border-gray-100 h-16 px-3 flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                            <div alt="" className="w-10 h-10 bg-blue-100 rounded-full"></div>
-                            <p className="text-lg">John</p>
-                        </div>
-                        <div className="flex items-center space-x-3">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z" />
-                            </svg>
-                        </div>
-                    </div>
+                    {isLoading && <div>
+                        <UserLoadingCard />
+                    </div>}
+                    {requests.length !== 0 && <Label text="Friends requests" />}
+                    {requests.map(user =>
+                        <UserRequestCard
+                            id={user._id}
+                            email={user.email}
+                            onAccept={this.handleAcceptRequest}
+                            onReject={this.handleRejectRequest} />
+                    )}
+                    {friends.length !== 0 && <Label text="Friends" />}
+                    {friends.map(friend =>
+                        <UserCard
+                            email={friend.email}
+                            key={friend._id}
+                            id={friend._id}
+                            avatarColor={friend.avatarColor}
+                            avatarName={friend.avatarName}
+                            firstName={friend.firstName}
+                            lastName={friend.lastName}
+                            onRemoveFriend={this.handleRemoveFriend}
+                            onCall={this.handleCall}
+                            isFriend={true}
+                        />)
+                    }
+                    {friends.length === 0 && requests.length === 0 && !isLoading &&
+                        <>
+                            <p className="text-center text-lg">No... Friend or Requests yet</p>
+                            <Link to="/search">
+                                <p className="text-center  text-blue-500 ">Go to Search</p>
+                            </Link>
+                        </>
+                    }
                 </div>
-            </div>
+            </>
         );
     }
 }

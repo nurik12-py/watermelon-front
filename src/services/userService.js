@@ -6,6 +6,10 @@ export function getUser() {
     return http.get(apiEndpoint + "/me");
 }
 
+export function getUsers(query) {
+    return http.get(`${apiEndpoint}?query=${query}`);
+}
+
 export function updateUser(data) {
     return http.put(apiEndpoint, data);
 }

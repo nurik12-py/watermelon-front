@@ -48,18 +48,6 @@ class Profile extends Component {
         return Object.keys(errors).length === 0 ? null : errors;
     }
 
-    setRandomAvatarName = () => {
-        const avatarNames = ['alligator', 'anteater', 'armadillo', 'auroch', 'axolotl', 'badger', 'bat', 'beaver', 'buffalo', 'camel', 'chameleon', 'cheetah', 'chipmunk', 'chinchilla', 'chupacabra', 'cormorant', 'coyote', 'crow', 'dingo', 'dinosaur', 'dolphin', 'duck', 'dragon', 'elephant', 'ferret', 'fox', 'frog', 'giraffe', 'gopher', 'grizzly'];
-        const avatarColors = ['4f46e5', '2563eb', 'd97706', '059669', '7c3aed'];
-        const randomAvatarName = avatarNames[Math.floor(Math.random() * avatarNames.length)];
-        const avatarColor = avatarColors[Math.floor(Math.random() * avatarColors.length)];
-        const data = { ...this.state.data };
-        data["avatarName"] = randomAvatarName;
-        data["avatarColor"] = avatarColor;
-        this.setState({ data, dataChanged: true });
-    }
-
-
     handleSubmit = async (event) => {
         event.preventDefault();
         const errors = this.validate();
@@ -82,7 +70,6 @@ class Profile extends Component {
                 <form onSubmit={this.handleSubmit} className="px-4 py-3">
                     <div className="flex flex-col items-center justify-center mb-4">
                         <Avatar avatarName={user.avatarName} color={user.avatarColor} />
-                        <Button title="Random avatar" iconName="shuffle" onClick={() => this.setRandomAvatarName()} />
                     </div>
                     <Input showLoadingAnimation={isLoading} onChange={this.handleChange} value={user.email} name="email" label="Email" placeholder="Email" disabled={true} />
                     <Input showLoadingAnimation={isLoading} onChange={this.handleChange} error={errors.firstName} value={user.firstName} name="firstName" label="First name" placeholder="First name..." />

@@ -1,14 +1,19 @@
-import React, { Component } from 'react';
-import Input from '../Components/Input';
+import React from 'react';
 import Label from '../Components/Label';
 import Navbar from '../Components/Navbar';
+import SearchInput from '../Components/SearchInput';
+import UserCard from '../Components/UserCard';
+import { addFriend, AddFriend } from '../services/friendsService';
+import { makeRequest } from '../services/requestsService';
+import { getUsers } from '../services/userService';
 
 class Search extends React.Component {
 
     constructor() {
         super();
         this.state = {
-            query: ""
+            query: "",
+            users: []
         }
     }
 
@@ -22,27 +27,48 @@ class Search extends React.Component {
         });
     }
 
+    handleSearch = async () => {
+        const { query } = this.state;
+        const { data: users } = await getUsers(query);
+        this.setState({ users });
+    }
+
+    handleCall = (id) => {
+        console.log(id);
+    }
+
+    handleFriendRequest = async (id) => {
+        const { data: result } = await makeRequest({ friendId: id });
+        console.log(result);
+    }
+
     render() {
-        return <div>
+        const { users } = this.state;
+        return <>
             <Navbar title={"Search"} />
             <div className="px-3 pt-2">
-                <Input value={this.state.query} onChange={this.handleChange} label="" name="query" placeholder="Search for users or rooms" type="text" />
-                <Label text="Users" />
-                <div className="mb-4 rounded-md bg-white border border-gray-100 h-16 px-3 flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                        <div alt="" className="w-10 h-10 bg-blue-100 rounded-full"></div>
-                        <p className="text-lg">Carl</p>
-                    </div>
-                </div>
-                <Label text="Rooms" />
-                <div className="mb-4 rounded-md bg-white border border-gray-100 h-16 px-3 flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                        <div alt="" className="w-10 h-10 bg-blue-100 rounded-full"></div>
-                        <p className="text-lg">Carl</p>
-                    </div>
-                </div>
+                <SearchInput
+                    name="query"
+                    placeholder="Search for users"
+                    type="text"
+                    value={this.state.query}
+                    onChange={this.handleChange}
+                    onSearch={this.handleSearch} />
+                {users.length === 0 ? null : <Label text="Results" />}
+                {users.map((user, key) =>
+                    <UserCard
+                        id={user._id}
+                        key={key}
+                        firstName={user.firstName}
+                        lastName={user.lastName}
+                        avatarColor={user.avatarColor}
+                        avatarName={user.avatarName}
+                        onFriendRequest={this.handleFriendRequest}
+                        onCall={this.handleCall}
+                    />)
+                }
             </div>
-        </div>;
+        </>;
     }
 }
 

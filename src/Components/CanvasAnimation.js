@@ -78,21 +78,21 @@ class CanvasAnimation extends Component {
             <Text text={title} x={window.innerWidth / 2 - 125} y={20} fontSize={18} height={18} width={250} ellipsis="true" align="center" fontFamily="Dosis" fontStyle="bold" />
             <Circle x={window.innerWidth / 2} y={window.innerWidth / 2} radius={35} fill={`#${this.props.user.avatarColor}`} />
             <AvatarImage avatarName={this.props.user.avatarName} x={window.innerWidth / 2 - 25} y={window.innerWidth / 2 - 25} imageHeight={50} imageWidth={50} />
-            {/* <Text text="Me" x={window.innerWidth / 2 - 10} y={window.innerWidth / 2 + 36} height={24} fontSize={16} width={40} fontFamily="Dosis" fontStyle="bold" /> */}
-
+            <Text text="Me" x={window.innerWidth / 2 - 10} y={window.innerWidth / 2 + 36} height={24} fontSize={16} width={40} fontFamily="Dosis" fontStyle="bold" />
         </Layer>
     }
 
     render() {
         return (
             <Stage width={window.innerWidth} height={window.innerWidth}>
-                {this.getUserCircle()}
                 <Layer>
-                    <Circle x={window.innerWidth / 2} y={window.innerWidth / 2} radius={this.props.orbitRadius} fill={"#3b82f610"} />
+                    <Circle x={window.innerWidth / 2} y={window.innerWidth / 2} radius={this.props.orbitRadius} fill={"#3b82f680"} />
+                    <Circle x={window.innerWidth / 2} y={window.innerWidth / 2} radius={this.props.orbitRadius - 3} fill={"#f9f7f3"} />
                     {this.getCircles().map(circle => circle)}
                     {this.getImages().map(image => image)}
                     {this.getTexts().map(text => text)}
                 </Layer>
+                {this.getUserCircle()}
             </Stage>
         );
     }
